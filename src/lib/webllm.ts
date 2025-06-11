@@ -1,4 +1,5 @@
 import { CreateMLCEngine, MLCEngine, MLCEngineConfig } from "@mlc-ai/web-llm";
+import { ChatMessage, SystemMessage } from "./types";
 
 export interface ModelInfo {
     id: string;
@@ -13,11 +14,6 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         description: "Meta's Llama 3.2 3B model, instruction-tuned",
     },
 ];
-
-export interface ChatMessage {
-    role: "user" | "assistant";
-    content: string;
-}
 
 class WebLLMService {
     private engine: MLCEngine | null = null;
@@ -67,8 +63,15 @@ class WebLLMService {
         }
 
         try {
+            const systemMessage: SystemMessage = {
+                role: "system",
+                content: "You are LocaLLM, a helpful and efficient AI assistant running locally. Your goal is to provide accurate, relevant, and concise answers. Always respond directly in the user's language.",
+            };
+              
+            const allMessages = [systemMessage, ...messages];
+
             const response = await this.engine.chat.completions.create({
-                messages,
+                messages: allMessages,
                 stream: true,
             });
 
@@ -85,6 +88,10 @@ class WebLLMService {
             console.error("Failed to generate response:", error);
             throw error;
         }
+    }
+
+    cancelCurrentRequest() {
+        this.engine?.interruptGenerate();
     }
 
     getCurrentModel(): string | null {

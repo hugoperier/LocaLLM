@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { KeyboardEvent } from "react";
+import { useWebLLM } from "@/contexts/WebLLMContext";
+import { webLLMService } from "@/lib/webllm";
 
 interface ChatInputProps {
   userInput: string;
@@ -18,8 +20,6 @@ interface ChatInputProps {
   sendMessage: () => void;
   isGenerating: boolean;
   isInitialized: boolean;
-  currentModel: string | null;
-  isModelLoading: boolean;
 }
 
 export function ChatInput({
@@ -28,14 +28,18 @@ export function ChatInput({
   sendMessage,
   isGenerating,
   isInitialized,
-  currentModel,
-  isModelLoading,
 }: ChatInputProps) {
+  const { currentModel, isModelLoading } = useWebLLM();
+
   const handleEnter = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const stopMessage = () => {
+    webLLMService.cancelCurrentRequest();
   };
 
   return (
@@ -65,19 +69,31 @@ export function ChatInput({
               placeholder="Type here ..."
               minHeight={25}
               maxHeight={400}
-              rows={1}
               onKeyDown={(e) => handleEnter(e)}
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               disabled={isGenerating}
             />
             <Button
-              onClick={() => sendMessage()}
+              onClick={isGenerating ? stopMessage : sendMessage}
               className="h-8 w-8 p-0"
-              disabled={isGenerating || !isInitialized}
+              disabled={!isInitialized}
             >
               {!isInitialized ? (
                 <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isGenerating ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                </svg>
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

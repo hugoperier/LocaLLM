@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { webLLMService, ChatMessage } from "@/lib/webllm";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { useWebLLM } from "@/contexts/WebLLMContext";
 
 interface Message {
   message: string;
@@ -16,34 +17,7 @@ export default function Chat() {
   const [conversation, setConversation] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentResponse, setCurrentResponse] = useState("");
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [currentModel, setCurrentModel] = useState<string | null>(null);
-  const [isModelLoading, setIsModelLoading] = useState(false);
-
-  useEffect(() => {
-    const initWebLLM = async () => {
-      try {
-        await webLLMService.initialize();
-        setCurrentModel(webLLMService.getCurrentModel());
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("Failed to initialize WebLLM:", error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initWebLLM();
-  }, []);
-
-  const handleModelChange = (modelId: string) => {
-    setCurrentModel(modelId);
-  };
-
-  const handleModelLoadingChange = (isLoading: boolean) => {
-    setIsModelLoading(isLoading);
-  };
+  const { isInitialized } = useWebLLM();
 
   const addMessage = (message: Message) => {
     setConversation((oldArray: Message[]) => [...oldArray, message]);
@@ -89,7 +63,7 @@ export default function Chat() {
 
   return (
     <main className="h-screen flex flex-col bg-muted/50">
-      <ChatHeader onModelChange={handleModelChange} onLoadingChange={handleModelLoadingChange} />
+      <ChatHeader />
       <ChatMessages
         conversation={conversation}
         isGenerating={isGenerating}
@@ -101,8 +75,6 @@ export default function Chat() {
         sendMessage={sendMessage}
         isGenerating={isGenerating}
         isInitialized={isInitialized}
-        currentModel={currentModel}
-        isModelLoading={isModelLoading}
       />
     </main>
   );

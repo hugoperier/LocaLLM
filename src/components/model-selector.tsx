@@ -1,4 +1,5 @@
-import { AVAILABLE_MODELS, ModelInfo, webLLMService } from "@/lib/webllm";
+import { AVAILABLE_MODELS, webLLMService } from "@/lib/webllm";
+import { useWebLLM } from "@/contexts/WebLLMContext";
 import {
   Select,
   SelectContent,
@@ -6,45 +7,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-interface ModelSelectorProps {
-  onModelChange?: (modelId: string) => void;
-  onLoadingChange?: (isLoading: boolean) => void;
-}
-
-export function ModelSelector({ onModelChange, onLoadingChange }: ModelSelectorProps) {
-  const [currentModel, setCurrentModel] = useState<string | null>(null);
+export function ModelSelector() {
+  const { isInitialized, currentModel } = useWebLLM();
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Initialize WebLLM when component mounts
-    webLLMService.initialize().catch(console.error);
-    const model = webLLMService.getCurrentModel();
-    setCurrentModel(model);
-    if (model && onModelChange) {
-      onModelChange(model);
-    }
-  }, [onModelChange]);
 
   const handleModelChange = async (modelId: string) => {
     setIsLoading(true);
-    if (onLoadingChange) {
-      onLoadingChange(true);
-    }
     try {
       await webLLMService.loadModel(modelId);
-      setCurrentModel(modelId);
-      if (onModelChange) {
-        onModelChange(modelId);
-      }
     } catch (error) {
       console.error("Failed to load model:", error);
     } finally {
       setIsLoading(false);
-      if (onLoadingChange) {
-        onLoadingChange(false);
-      }
     }
   };
 
@@ -53,7 +29,7 @@ export function ModelSelector({ onModelChange, onLoadingChange }: ModelSelectorP
       <Select
         value={currentModel || AVAILABLE_MODELS[0].id}
         onValueChange={handleModelChange}
-        disabled={isLoading}
+        disabled={isLoading || !isInitialized}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select a model" />
