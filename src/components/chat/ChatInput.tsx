@@ -1,0 +1,106 @@
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PlusIcon } from "@radix-ui/react-icons";
+import { KeyboardEvent } from "react";
+
+interface ChatInputProps {
+  userInput: string;
+  setUserInput: (input: string) => void;
+  sendMessage: () => void;
+  isGenerating: boolean;
+  isInitialized: boolean;
+  currentModel: string | null;
+  isModelLoading: boolean;
+}
+
+export function ChatInput({
+  userInput,
+  setUserInput,
+  sendMessage,
+  isGenerating,
+  isInitialized,
+  currentModel,
+  isModelLoading,
+}: ChatInputProps) {
+  const handleEnter = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <div className="w-full sm:max-w-3xl mx-auto">
+      <div className="bg-white sm:rounded-t-md border-t sm:border shadow-lg">
+        <div className="p-4">
+          <div className="flex flex-row gap-3 p-4 border rounded-t-md">
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="outline-none">
+                  <div className="h-8 w-8 p-0 rounded-full shadow-sm border flex items-center justify-center">
+                    <PlusIcon className="h-4 w-4" />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" alignOffset={-10}>
+                  <DropdownMenuLabel>More options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Reset</DropdownMenuItem>
+                  <DropdownMenuItem>
+                    Attach <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <AutosizeTextarea
+              className="flex-1 outline-none border-0"
+              placeholder="Type here ..."
+              minHeight={25}
+              maxHeight={400}
+              rows={1}
+              onKeyDown={(e) => handleEnter(e)}
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              disabled={isGenerating}
+            />
+            <Button
+              onClick={() => sendMessage()}
+              className="h-8 w-8 p-0"
+              disabled={isGenerating || !isInitialized}
+            >
+              {!isInitialized ? (
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 256 256"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path d="M200 32v144a8 8 0 0 1-8 8H67.31l34.35 34.34a8 8 0 0 1-11.32 11.32l-48-48a8 8 0 0 1 0-11.32l48-48a8 8 0 0 1 11.32 11.32L67.31 168H184V32a8 8 0 0 1 16 0Z"></path>
+                </svg>
+              )}
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground mt-2 px-4">
+            {isModelLoading ? (
+              <span>Loading model...</span>
+            ) : currentModel ? (
+              <span>Using model: {currentModel}</span>
+            ) : (
+              <span>No model selected</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+} 
