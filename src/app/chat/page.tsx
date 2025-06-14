@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { webLLMService, ChatMessage } from "@/lib/webllm";
+import { webLLMService } from "@/lib/webllm";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
