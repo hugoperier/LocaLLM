@@ -1,19 +1,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface Message {
-  message: string;
-  type: "bot" | "user";
-}
+import { ChatMessage as ChatMessageType } from "@/lib/types";
 
 interface ChatMessageProps {
-  message: Message;
+  message: ChatMessageType;
   showAvatar: boolean;
 }
 
 export function ChatMessage({ message, showAvatar }: ChatMessageProps) {
   return (
     <div className="flex gap-2 first:mt-2">
-      {message.type === "bot" && (
+      {message.role === "assistant" && (
         <>
           {!showAvatar ? (
             <div className={`w-6 h-6`}></div>
@@ -27,14 +23,14 @@ export function ChatMessage({ message, showAvatar }: ChatMessageProps) {
       )}
       <div
         className={`max-w-[60%] flex flex-col ${
-          message.type === "bot"
+          (message.role === "assistant" || message.role === "system")
             ? "bg-white mr-auto"
             : "text-white bg-black ml-auto"
         } items-start gap-2 rounded-lg border p-2 text-left text-sm transition-all whitespace-pre-wrap`}
       >
-        {message.message}
+        {message.content}
       </div>
-      {message.type === "user" && (
+      {message.role === "user" && (
         <>
           {!showAvatar ? (
             <div className={`w-6 h-6`}></div>

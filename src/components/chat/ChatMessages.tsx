@@ -2,14 +2,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatMessage } from "./ChatMessage";
 import { useRef, useEffect } from "react";
-
-interface Message {
-  message: string;
-  type: "bot" | "user";
-}
+import { ChatMessage as ChatMessageType } from "@/lib/types";
 
 interface ChatMessagesProps {
-  conversation: Message[];
+  conversation: ChatMessageType[];
   isGenerating: boolean;
   currentResponse: string;
 }
@@ -47,7 +43,7 @@ export function ChatMessages({
             message={msg}
             showAvatar={
               i === 0 ||
-              conversation[i - 1].type !== msg.type
+              conversation[i - 1].role !== msg.role
             }
           />
         ))}
