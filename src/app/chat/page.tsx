@@ -14,6 +14,7 @@ export default function Chat() {
   const [userInput, setUserInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentResponse, setCurrentResponse] = useState("");
+  const [generatingConversationId, setGeneratingConversationId] = useState<string | null>(null);
   const { isInitialized } = useWebLLM();
   const {
     conversations,
@@ -46,6 +47,7 @@ export default function Chat() {
 
       setIsGenerating(true);
       setCurrentResponse("");
+      setGeneratingConversationId(selectedConversation.id);
 
       try {
         // Convert conversation to WebLLM format
@@ -76,6 +78,7 @@ export default function Chat() {
       } finally {
         setIsGenerating(false);
         setCurrentResponse("");
+        setGeneratingConversationId(null);
       }
     }
   };
@@ -96,8 +99,8 @@ export default function Chat() {
           <>
             <ChatMessages
               conversation={selectedConversation.messages}
-              isGenerating={isGenerating}
-              currentResponse={currentResponse}
+              isGenerating={isGenerating && generatingConversationId === selectedConversation.id}
+              currentResponse={generatingConversationId === selectedConversation.id ? currentResponse : ""}
             />
             <ChatInput
               userInput={userInput}
