@@ -1,4 +1,4 @@
-import { CreateMLCEngine, MLCEngine, MLCEngineConfig } from "@mlc-ai/web-llm";
+import { CreateMLCEngine, MLCEngine, MLCEngineConfig, InitProgressReport } from "@mlc-ai/web-llm";
 import { ChatMessage, SystemMessage } from "./types";
 
 export interface ModelInfo {
@@ -20,6 +20,16 @@ class WebLLMService {
     private isInitialized = false;
     private currentModel: string | null = null;
     private onTokenCallback: ((token: string) => void) | null = null;
+    private onStatusCallback: ((status: InitProgressReport) => void) | null = null;
+    private onInitializedCallback: ((isInitialized: boolean) => void) | null = null;
+
+    setInitializedCallback(callback: (isInitialized: boolean) => void) {
+        this.onInitializedCallback = callback;
+    }
+
+    setStatusCallback(callback: (status: InitProgressReport) => void) {
+        this.onStatusCallback = callback;
+    }
 
     async initialize() {
         if (this.isInitialized) return;
@@ -28,14 +38,24 @@ class WebLLMService {
             const modelId = "Llama-3.2-3B-Instruct-q4f32_1-MLC";
 
             this.engine = await CreateMLCEngine('Llama-3.2-3B-Instruct-q4f32_1-MLC', {
-                initProgressCallback: (status) => console.log(`Loading model ${status.text} ${status.progress }% `)
+                initProgressCallback: (status) => {
+                    if (this.onStatusCallback) {
+                        console.log("status", status);
+                        this.onStatusCallback(status);
+                    }
+                }
             });
 
             this.currentModel = modelId;
             this.isInitialized = true;
+            if (this.onInitializedCallback) {
+                this.onInitializedCallback(true);
+            }
         } catch (error) {
             console.error("Failed to initialize WebLLM:", error);
-            throw error;
+            if (this.onInitializedCallback) {
+                this.onInitializedCallback(false);
+            }
         }
     }
 
@@ -45,8 +65,18 @@ class WebLLMService {
         }
 
         try {
+            // Notify that we're starting to load the model
+            if (this.onStatusCallback) {
+                this.onStatusCallback({ text: "Loading model...", progress: 0, timeElapsed: 0 });
+            }
+            
             await this.engine.reload(modelId);
             this.currentModel = modelId;
+            
+            // Notify that loading is complete
+            if (this.onStatusCallback) {
+                this.onStatusCallback({ text: "Model loaded", progress: 1, timeElapsed: 0 });
+            }
         } catch (error) {
             console.error(`Failed to load model ${modelId}:`, error);
             throw error;

@@ -29,7 +29,7 @@ export function ChatInput({
   isGenerating,
   isInitialized,
 }: ChatInputProps) {
-  const { currentModel, isModelLoading } = useWebLLM();
+  const { currentModel, isModelLoading, status } = useWebLLM();
 
   const handleEnter = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -42,6 +42,17 @@ export function ChatInput({
     webLLMService.cancelCurrentRequest();
   };
 
+  const parseLoadingProgress = (message: string) => {
+    const match = message.match(/\[(\d+)\/(\d+)\]/);
+    if (match) {
+      const current = parseInt(match[1]);
+      const total = parseInt(match[2]);
+      return { current, total, percentage: (current / total) * 100 };
+    }
+    return null;
+  };
+
+  const progress = status?.text ? parseLoadingProgress(status.text) : null;
   return (
     <div className="w-full sm:max-w-3xl mx-auto">
       <div className="bg-white sm:rounded-t-md border-t sm:border shadow-lg">
@@ -108,7 +119,24 @@ export function ChatInput({
           </div>
           <div className="text-xs text-muted-foreground mt-2 px-4">
             {isModelLoading ? (
-              <span>Loading model...</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span>Loading model...</span>
+                  {progress && (
+                    <span className="text-muted-foreground">
+                      {progress.current}/{progress.total}
+                    </span>
+                  )}
+                </div>
+                {progress && (
+                  <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300 ease-in-out"
+                      style={{ width: `${progress.percentage}%` }}
+                    />
+                  </div>
+                )}
+              </div>
             ) : currentModel ? (
               <span>Using model: {currentModel}</span>
             ) : (

@@ -16,7 +16,6 @@ export class ConversationSummaryService {
 
   public async generateSummary(conversationId: string, message: ChatMessage): Promise<string> {
     // Check cache first
-    console.log("Generating summary for conversation", conversationId);
     const cachedSummary = this.summaryCache.get(conversationId);
     if (cachedSummary) {
       return cachedSummary;
@@ -26,13 +25,11 @@ export class ConversationSummaryService {
 
     try {
       const prompt = `Résume en maximum 5 mots le message suivant: "${message.content}"`;
-      console.log("Prompt:", prompt);
       const summaryMessages: ChatMessage[] = [
         { role: "user", content: prompt }
       ];
 
       const summary = await webLLMService.generateResponse(summaryMessages);
-      console.log("Summary:", summary);
       // Cache the result
       this.summaryCache.set(conversationId, summary);
       

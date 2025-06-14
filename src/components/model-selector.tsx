@@ -7,20 +7,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
 
 export function ModelSelector() {
-  const { isInitialized, currentModel } = useWebLLM();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isInitialized, currentModel, isModelLoading } = useWebLLM();
 
   const handleModelChange = async (modelId: string) => {
-    setIsLoading(true);
     try {
       await webLLMService.loadModel(modelId);
     } catch (error) {
       console.error("Failed to load model:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -29,7 +24,7 @@ export function ModelSelector() {
       <Select
         value={currentModel || AVAILABLE_MODELS[0].id}
         onValueChange={handleModelChange}
-        disabled={isLoading || !isInitialized}
+        disabled={isModelLoading || !isInitialized}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select a model" />
@@ -42,7 +37,7 @@ export function ModelSelector() {
           ))}
         </SelectContent>
       </Select>
-      {isLoading && (
+      {isModelLoading && (
         <div className="text-sm text-muted-foreground">Loading...</div>
       )}
     </div>
