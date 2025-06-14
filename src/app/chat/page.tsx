@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { webLLMService } from "@/lib/webllm";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
 import { useWebLLM } from "@/contexts/WebLLMContext";
 import { useConversations } from "@/hooks/useConversations";
-import { Button } from "@/components/ui/button";
+import { ChatMessage } from "@/lib/types";
 
 export default function Chat() {
   const [userInput, setUserInput] = useState("");
@@ -22,7 +23,12 @@ export default function Chat() {
     clearAll,
     selectById,
     addMessage,
+    loadFromStorage,
   } = useConversations();
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
 
   const sendMessage = async () => {
     if (
@@ -34,8 +40,8 @@ export default function Chat() {
       const userMessage = userInput;
       setUserInput(""); // clear the textarea
       await addMessage(selectedConversation.id, {
-        message: userMessage,
-        type: "user",
+        content: userMessage,
+        role: "user",
       });
 
       setIsGenerating(true);
@@ -44,10 +50,10 @@ export default function Chat() {
       try {
         // Convert conversation to WebLLM format
         const webLLMMessages: ChatMessage[] = selectedConversation.messages
-          .concat({ message: userMessage, type: "user" })
+          .concat({ content: userMessage, role: "user" })
           .map((msg) => ({
-          role: msg.type === "user" ? "user" : "assistant",
-          content: msg.message.toString(),
+          role: msg.role === "user" ? "user" : "assistant",
+          content: msg.content.toString(),
         }));
 
         // Set up token callback for streaming
@@ -58,14 +64,14 @@ export default function Chat() {
         // Generate response
         const response = await webLLMService.generateResponse(webLLMMessages);
         await addMessage(selectedConversation.id, {
-          message: response,
-          type: "bot",
+          content: response,
+          role: "assistant",
         });
       } catch (error) {
         console.error("Failed to generate response:", error);
         await addMessage(selectedConversation.id, {
-          message: "Sorry, I encountered an error while generating a response.",
-          type: "bot",
+          content: "Sorry, I encountered an error while generating a response.",
+          role: "assistant",
         });
       } finally {
         setIsGenerating(false);
@@ -74,46 +80,16 @@ export default function Chat() {
     }
   };
 
-  const formatTitle = (timestamp: number) =>
-    new Date(timestamp).toLocaleString();
-
   return (
     <div className="flex h-screen">
-      <aside className="w-64 border-r flex flex-col">
-        <div className="p-2 flex gap-2 border-b">
-          <Button className="flex-1" onClick={add}>
-            + Nouvelle conversation
-          </Button>
-          <Button variant="destructive" onClick={clearAll}>
-            🗑️
-          </Button>
-        </div>
-        <div className="flex-1 overflow-auto">
-          {conversations.map((conv) => (
-            <div
-              key={conv.id}
-              onClick={() => selectById(conv.id)}
-              className={`flex items-center justify-between px-2 py-1 cursor-pointer hover:bg-muted ${
-                selectedConversation?.id === conv.id ? "bg-muted" : ""
-              }`}
-            >
-              <span className="text-sm truncate">
-                {formatTitle(conv.timestamp)}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteOne(conv.id);
-                }}
-              >
-                ✕
-              </Button>
-            </div>
-          ))}
-        </div>
-      </aside>
+      <ConversationSidebar
+        conversations={conversations}
+        selectedConversation={selectedConversation}
+        onAdd={add}
+        onDelete={deleteOne}
+        onClear={clearAll}
+        onSelect={selectById}
+      />
       <main className="flex-1 flex flex-col bg-muted/50">
         <ChatHeader />
         {selectedConversation ? (
