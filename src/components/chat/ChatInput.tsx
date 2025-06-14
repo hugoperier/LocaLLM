@@ -9,7 +9,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { Plus } from "lucide-react";
 import { KeyboardEvent } from "react";
 import { useWebLLM } from "@/contexts/WebLLMContext";
 import { webLLMService } from "@/lib/webllm";
@@ -51,7 +51,7 @@ export function ChatInput({
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none">
                   <div className="h-8 w-8 p-0 rounded-full shadow-sm border flex items-center justify-center">
-                    <PlusIcon className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" alignOffset={-10}>
