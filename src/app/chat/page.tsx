@@ -25,6 +25,7 @@ export default function Chat() {
     selectById,
     addMessage,
     loadFromStorage,
+    updateTitle,
   } = useConversations();
 
   useEffect(() => {
@@ -83,15 +84,25 @@ export default function Chat() {
     }
   };
 
+  // Ajout logique pour empêcher la création d'un nouveau chat si le dernier est vide
+  const handleAddConversation = () => {
+    if (conversations.length > 0 && conversations[0].messages.length === 0) {
+      selectById(conversations[0].id);
+    } else {
+      add();
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <ConversationSidebar
         conversations={conversations}
         selectedConversation={selectedConversation}
-        onAdd={add}
+        onAdd={handleAddConversation}
         onDelete={deleteOne}
         onClear={clearAll}
         onSelect={selectById}
+        onRename={updateTitle}
       />
       <main className="flex-1 flex flex-col bg-muted/50">
         <ChatHeader />

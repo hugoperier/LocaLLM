@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 // Placeholder SVG icons (à remplacer par Lucide/Heroicons ou autre lib)
 const IconSplit = () => (
@@ -53,8 +54,13 @@ export function ConversationSidebar({
       className={`transition-all duration-300 border-r flex flex-col bg-white h-full shadow-lg ${collapsed ? "w-20" : "w-80"}`}
       style={{ minWidth: collapsed ? 64 : 320 }}
     >
-      {/* Header moderne */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b min-h-[64px]">
+      {/* Logo + split view */}
+      <div className="flex items-center justify-between px-4 py-4 border-b min-h-[64px]">
+        <div className="flex items-center">
+          {!collapsed && (
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded" />
+          )}
+        </div>
         <button
           className="p-2 rounded hover:bg-muted transition"
           aria-label="Replier le menu"
@@ -62,30 +68,31 @@ export function ConversationSidebar({
         >
           <IconSplit />
         </button>
-        {!collapsed && (
-          <span className="font-bold text-lg ml-2 tracking-tight select-none">Chats</span>
-        )}
-        <div className="flex-1" />
-        {!collapsed && (
-          <>
-            <button
-              className="p-2 rounded hover:bg-muted transition"
-              aria-label="Rechercher"
-            >
-              <IconSearch />
-            </button>
-            <button
-              className="p-2 rounded hover:bg-muted transition"
-              aria-label="Nouvelle conversation"
-              onClick={onAdd}
-            >
-              <IconAdd />
-            </button>
-          </>
-        )}
       </div>
+      {/* Actions principales */}
+      {!collapsed && (
+        <div className="flex flex-col gap-3 px-4 pt-6 pb-2">
+          <button
+            className="flex items-center gap-2 justify-center w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-base shadow hover:bg-primary/90 transition"
+            onClick={onAdd}
+          >
+            <IconAdd /> Nouvelle conversation
+          </button>
+          <button
+            className="flex items-center gap-2 justify-center w-full py-3 rounded-lg bg-muted text-foreground font-medium text-base hover:bg-accent transition"
+          >
+            <IconSearch /> Rechercher un chat
+          </button>
+        </div>
+      )}
+      {/* Titre section chats */}
+      {!collapsed && (
+        <div className="px-4 pt-4 pb-2">
+          <span className="text-xl font-bold tracking-tight">Chats</span>
+        </div>
+      )}
       {/* Liste des chats */}
-      <div className="flex-1 overflow-auto py-2 px-1">
+      <div className={`flex-1 overflow-auto ${collapsed ? "pt-4" : "pt-2"} px-1`}>
         {sortedConversations.length === 0 && !collapsed && (
           <div className="text-muted-foreground text-center mt-8">Aucune conversation</div>
         )}
@@ -158,7 +165,7 @@ export function ConversationSidebar({
       </div>
       {/* Footer (vider tous les chats) */}
       {!collapsed && (
-        <div className="p-3 border-t flex justify-end">
+        <div className="p-3 border-t flex justify-center">
           <Button variant="destructive" size="sm" onClick={onClear}>
             Vider tous les chats
           </Button>
