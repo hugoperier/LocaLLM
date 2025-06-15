@@ -97,7 +97,7 @@ export function SearchModal({ isOpen, onClose, conversations, onSelect }: Search
             </div>
           ) : searchQuery && results.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              Aucun résultat trouvé pour "{searchQuery}"
+                Aucun résultat trouvé pour &quot;{searchQuery}&quot;
             </div>
           ) : !searchQuery ? (
             <div className="p-8 text-center text-muted-foreground">

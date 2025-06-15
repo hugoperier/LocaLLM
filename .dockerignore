@@ -1,0 +1,22 @@
+# Ignore dependencies and build output
+node_modules
+.next
+
+# Git and logs
+.git
+.gitignore
+Dockerfile
+.dockerignore
+npm-debug.log
+README.md
+
+# Local environment files
+.env*
+
+# VSCode and IDE files
+.vscode
+.idea
+
+# Log files
+*.log
+
