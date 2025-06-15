@@ -39,5 +39,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ env.REGISTRY }}locallm:latest
+            ${{ env.REGISTRY }}locallm:${{ github.event.release.tag_name }}
