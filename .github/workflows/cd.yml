@@ -38,6 +38,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.REGISTRY }}locallm:latest
-            ${{ env.REGISTRY }}locallm:${{ github.event.release.tag_name }}
+        tags: |
+          docker.io/hugoperier/locallm:latest
+          docker.io/hugoperier/locallm:${{ github.event.release.tag_name }}
+
+
