@@ -28,3 +28,18 @@ Ouvrez ensuite votre navigateur sur [http://localhost:3000](http://localhost:300
 
 ## À propos
 Ce projet est fourni sous licence MIT. Il permet d'expérimenter facilement les modèles de langage directement sur sa machine.
+
+## Docker
+Pour lancer l'application dans un conteneur&nbsp;:
+```bash
+docker build -t locallm .
+docker run -p 3000:3000 locallm
+```
+La configuration s'effectue via des variables d'environnement passées au conteneur.
+
+## Docker Compose
+Vous pouvez également démarrer le service via `docker compose` :
+```bash
+cp .env.example .env # créez vos variables d'environnement
+docker compose up --build
+```
