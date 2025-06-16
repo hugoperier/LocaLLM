@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { SearchModal } from "./SearchModal";
+import { ModelSelectorModal } from "./ModelSelectorModal";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
@@ -49,6 +50,7 @@ export function ConversationSidebar({
   const [renameValue, setRenameValue] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
 
   // Tri par date de dernière activité (timestamp)
   const sortedConversations = [...conversations].sort((a, b) => b.timestamp - a.timestamp);
@@ -171,7 +173,10 @@ export function ConversationSidebar({
         </div>
         {/* Footer (supprimer tous les chats) */}
         {!collapsed && (
-          <div className="p-3 border-t flex justify-center">
+          <div className="p-3 border-t flex justify-between gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setIsModelModalOpen(true)}>
+              Gérer les modèles
+            </Button>
             <Button variant="destructive" size="sm" onClick={() => setIsClearConfirmOpen(true)}>
               Supprimer tous les chats
             </Button>
@@ -184,6 +189,7 @@ export function ConversationSidebar({
         conversations={conversations}
         onSelect={onSelect}
       />
+      <ModelSelectorModal isOpen={isModelModalOpen} onOpenChange={setIsModelModalOpen} />
       <Dialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
         <DialogContent>
           <DialogTitle>Vider tous les chats</DialogTitle>
