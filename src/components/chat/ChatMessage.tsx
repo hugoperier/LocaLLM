@@ -5,130 +5,163 @@ import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components/ui/autosize-
 import { Pencil, Check, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import clsx from "clsx";
+import { createPortal } from "react-dom";
 
 interface ChatMessageProps {
   message: ChatMessageType;
   showAvatar: boolean;
   onEdit?: (content: string) => void;
 }
+
 export function ChatMessage({ message, showAvatar, onEdit }: ChatMessageProps) {
+  const isUser = message.role === "user";
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(message.content);
   const inputRef = useRef<AutosizeTextAreaRef | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.textArea.focus();
-    }
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.textArea.focus();
   }, [isEditing]);
 
-  const handleSave = () => {
-    if (onEdit) {
-      onEdit(value);
-    }
+  // Gestion des raccourcis clavier pour l'édition
+  useEffect(() => {
+    if (!isEditing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsEditing(false);
+        setValue(message.content);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        save();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing, value]);
+
+  const save = () => {
+    onEdit?.(value);
     setIsEditing(false);
   };
 
-  return (
-    <div className="flex gap-2 first:mt-2 group">
-      {message.role === "assistant" && (
-        <>
-          {!showAvatar ? (
-            <div className={`w-6 h-6`}></div>
-          ) : (
-            <Avatar className={`w-6 h-6 bg-gray-200`}>
-              <AvatarImage src="avatar/02.png" />
-              <AvatarFallback>.ˍ.</AvatarFallback>
-            </Avatar>
-          )}
-        </>
-      )}
-      <div
-        className={`relative max-w-[60%] flex flex-col ${
-          message.role === "assistant" || message.role === "system"
-            ? "bg-white mr-auto"
-            : "text-white bg-black ml-auto"
-        } items-start gap-2 rounded-lg border p-2 text-left text-sm transition-all whitespace-pre-wrap`}
-      >
-        {isEditing ? (
-          <>
+  const bubble = clsx(
+    "relative max-w-[60%] flex flex-col rounded-xl border p-3 text-sm whitespace-pre-wrap transition-colors group",
+    {
+      "ml-auto bg-slate-900 text-slate-100 border-slate-700": isUser,
+      "mr-auto bg-white text-slate-900 border-slate-200": !isUser,
+    },
+  );
+
+  const btn =
+    "inline-flex items-center justify-center rounded-md p-1 hover:bg-slate-700/10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition";
+
+  // Overlay d'édition
+  const editOverlay = mounted && isEditing
+    ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="relative w-[90vw] max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6 flex flex-col gap-4 border border-slate-200 dark:border-slate-700 animate-fade-in">
             <AutosizeTextarea
               ref={inputRef}
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              minHeight={25}
-              maxHeight={200}
-              className="w-full outline-none border-0 bg-transparent"
+              minHeight={60}
+              maxHeight={300}
+              className="w-full outline-none border-0 bg-transparent resize-none text-base font-medium"
+              placeholder="Modifier votre message..."
+              autoFocus
             />
-            <div className="flex justify-end gap-1 w-full mt-1">
+            <div className="flex justify-end gap-3 mt-2">
               <button
-                className="p-1 text-primary hover:text-primary/80"
+                className={clsx(btn, "text-primary bg-primary/10 hover:bg-primary/20 font-semibold px-4 py-2 rounded-lg")}
                 aria-label="Valider"
-                onClick={handleSave}
+                onClick={save}
               >
-                <Check className="w-4 h-4" />
+                <Check className="w-5 h-5 mr-1" /> Valider
               </button>
               <button
-                className="p-1 text-muted-foreground hover:text-muted-foreground/80"
+                className={clsx(btn, "text-slate-500 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 rounded-lg")}
                 aria-label="Annuler"
                 onClick={() => {
                   setIsEditing(false);
                   setValue(message.content);
                 }}
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5 mr-1" /> Annuler
               </button>
             </div>
-          </>
-        ) : (
-          <>
-            {message.role === "assistant" ? (
-              <div className="prose prose-sm max-w-none prose-blue prose-pre:bg-gray-100 prose-pre:rounded-md prose-pre:p-2 prose-code:bg-gray-100 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-blockquote:border-l-4 prose-blockquote:border-blue-200 prose-blockquote:bg-blue-50 prose-blockquote:px-3 prose-blockquote:py-1 prose-li:marker:text-blue-400 prose-a:text-blue-600 hover:prose-a:underline prose-strong:font-semibold prose-em:italic prose-table:border prose-table:border-gray-200 prose-th:bg-gray-100 prose-th:font-semibold prose-th:p-2 prose-td:p-2 prose-img:rounded-md prose-img:shadow-sm prose-img:border overflow-x-auto w-full">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: (props) => (
-                      <a {...props} target="_blank" rel="noopener noreferrer">
-                        {props.children}
-                      </a>
-                    ),
-                  }}
-                >
-                  {message.content}
-                </ReactMarkdown>
-              </div>
-            ) : (
-              <>
+            <span className="absolute top-2 right-4 text-xs text-slate-400 select-none">Echap pour annuler, Ctrl+Entrée pour valider</span>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      {editOverlay}
+      <div className={clsx("flex gap-2 first:mt-2", isEditing && "pointer-events-none blur-sm select-none")}>
+        {!isUser && showAvatar && (
+          <Avatar className="w-6 h-6 bg-gray-200">
+            <AvatarImage src="avatar/02.png" />
+            <AvatarFallback>.ˍ.</AvatarFallback>
+          </Avatar>
+        )}
+
+        <div className={bubble}>
+          {onEdit && isUser && !isEditing && (
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100">
+              <button
+                className={clsx(btn, "text-slate-400 hover:text-slate-100")}
+                aria-label="Éditer"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {isEditing ? null : message.role === "assistant" ? (
+            <div className="prose prose-sm max-w-none w-full prose-blue dark:prose-invert">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: (props) => (
+                    <a
+                      {...props}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline-offset-2 hover:underline"
+                    >
+                      {props.children}
+                    </a>
+                  ),
+                }}
+              >
                 {message.content}
-                {"edited" in message && message.edited && (
-                  <span className="ml-1 text-xs text-muted-foreground">(Édité)</span>
-                )}
-                {onEdit && message.role === "user" && (
-                  <button
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground"
-                    aria-label="Éditer le message"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                )}
-              </>
-            )}
-          </>
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <>
+              {message.content}
+              {"edited" in message && message.edited && (
+                <span className="ml-1 text-xs text-slate-400">(Édité)</span>
+              )}
+            </>
+          )}
+        </div>
+
+        {isUser && showAvatar && (
+          <Avatar className="w-6 h-6 bg-gray-200">
+            <AvatarImage src="avatar/01.png" />
+            <AvatarFallback>.ˍ.</AvatarFallback>
+          </Avatar>
         )}
       </div>
-      {message.role === "user" && (
-        <>
-          {!showAvatar ? (
-            <div className={`w-6 h-6`}></div>
-          ) : (
-            <Avatar className={`w-6 h-6 bg-gray-200`}>
-              <AvatarImage src="avatar/01.png" />
-              <AvatarFallback>.ˍ.</AvatarFallback>
-            </Avatar>
-          )}
-        </>
-      )}
-    </div>
+    </>
   );
-} 
+}
