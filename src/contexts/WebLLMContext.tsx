@@ -31,6 +31,10 @@ export function WebLLMProvider({ children }: { children: React.ReactNode }) {
                     setIsInitialized(initialized);
                     setIsModelLoading(false);
                 });
+                webLLMService.setModelChangeCallback((modelId) => {
+                    setCurrentModel(modelId);
+                    setIsModelLoading(false);
+                });
                 await webLLMService.initialize();
                 setCurrentModel(webLLMService.getCurrentModel());
             } catch (error) {

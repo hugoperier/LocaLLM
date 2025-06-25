@@ -22,14 +22,23 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         avatar: '/avatar/01.png',
     },
     {
-        id: 'phi-3.5-vision-q4f16',
-        name: 'Phi-3.5 Vision (q4f16)',
-        description: 'Modèle multimodal (texte + image) compact et rapide. Idéal pour l\'usage léger.',
-        params: '3.8B',
-        size: '4.0GB',
+        id: 'gemma-2-9b-it-q4f32_1-MLC',
+        name: 'Gemma 2 9B',
+        description: 'Modèle multimodal (texte + image) de google. Offre les meilleures performances pour un usage plus lourd.',
+        params: '9B',
+        size: '5.0GB',
         score: 'A',
         avatar: '/avatar/02.png',
     },
+    // {
+    //     id: 'phi-3.5-vision-q4f16',
+    //     name: 'Phi-3.5 Vision (q4f16)',
+    //     description: 'Modèle multimodal (texte + image) compact et rapide. Idéal pour l\'usage léger.',
+    //     params: '3.8B',
+    //     size: '4.0GB',
+    //     score: 'A',
+    //     avatar: '/avatar/02.png',
+    // },
     {
         id: 'Llama-3.2-3B-Instruct-q4f32_1-MLC',
         name: 'Llama 3.2 3B',
@@ -41,15 +50,6 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
 ]
 
-
-/*export const AVAILABLE_MODELS: ModelInfo[] = [
-    {
-        id: "Llama-3.2-3B-Instruct-q4f32_1-MLC",
-        name: "Llama 3.2 3B",
-        description: "Meta's Llama 3.2 3B model, instruction-tuned",
-    },
-];*/
-
 class WebLLMService {
     private engine: MLCEngine | null = null;
     private isInitialized = false;
@@ -58,6 +58,7 @@ class WebLLMService {
     private onStatusCallback: ((status: InitProgressReport) => void) | null = null;
     private onInitializedCallback: ((isInitialized: boolean) => void) | null = null;
     private installedModels: string[] = [];
+    private onModelChangeCallback: ((modelId: string) => void) | null = null;
 
     constructor() {
         // Load installed models from localStorage on initialization
@@ -105,6 +106,10 @@ class WebLLMService {
 
     setStatusCallback(callback: (status: InitProgressReport) => void) {
         this.onStatusCallback = callback;
+    }
+
+    setModelChangeCallback(callback: (modelId: string) => void) {
+        this.onModelChangeCallback = callback;
     }
 
     async initialize() {
@@ -160,7 +165,6 @@ class WebLLMService {
             if (this.onStatusCallback) {
                 this.onStatusCallback({ text: "Loading model...", progress: 0, timeElapsed: 0 });
             }
-
             await this.engine.reload(modelId);
         }
         
@@ -170,6 +174,10 @@ class WebLLMService {
         // Notify that loading is complete
         if (this.onStatusCallback) {
             this.onStatusCallback({ text: "Model loaded", progress: 1, timeElapsed: 0 });
+        }
+        // Notify model change
+        if (this.onModelChangeCallback) {
+            this.onModelChangeCallback(modelId);
         }
     }
 
