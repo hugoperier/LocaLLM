@@ -83,7 +83,7 @@ export function ChatMessage({ message, showAvatar, onEdit }: ChatMessageProps) {
         ) : (
           <>
             {message.role === "assistant" ? (
-              <div className="prose prose-sm max-w-none prose-blue prose-pre:bg-gray-100 prose-pre:rounded-md prose-pre:p-2 prose-code:bg-gray-100 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-blockquote:border-l-4 prose-blockquote:border-blue-200 prose-blockquote:bg-blue-50 prose-blockquote:px-3 prose-blockquote:py-1 prose-li:marker:text-blue-400 prose-a:text-blue-600 hover:prose-a:underline prose-strong:font-semibold prose-em:italic prose-table:border prose-table:border-gray-200 prose-th:bg-gray-100 prose-th:font-semibold prose-th:p-2 prose-td:p-2 prose-img:rounded-md prose-img:shadow-sm prose-img:border">
+              <div className="prose prose-sm max-w-none prose-blue prose-pre:bg-gray-100 prose-pre:rounded-md prose-pre:p-2 prose-code:bg-gray-100 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-blockquote:border-l-4 prose-blockquote:border-blue-200 prose-blockquote:bg-blue-50 prose-blockquote:px-3 prose-blockquote:py-1 prose-li:marker:text-blue-400 prose-a:text-blue-600 hover:prose-a:underline prose-strong:font-semibold prose-em:italic prose-table:border prose-table:border-gray-200 prose-th:bg-gray-100 prose-th:font-semibold prose-th:p-2 prose-td:p-2 prose-img:rounded-md prose-img:shadow-sm prose-img:border overflow-x-auto w-full">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
