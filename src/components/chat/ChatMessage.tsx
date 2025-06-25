@@ -3,6 +3,8 @@ import { ChatMessage as ChatMessageType } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
 import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components/ui/autosize-textarea";
 import { Pencil, Check, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -80,18 +82,37 @@ export function ChatMessage({ message, showAvatar, onEdit }: ChatMessageProps) {
           </>
         ) : (
           <>
-            {message.content}
-            {"edited" in message && message.edited && (
-              <span className="ml-1 text-xs text-muted-foreground">(Édité)</span>
-            )}
-            {onEdit && message.role === "user" && (
-              <button
-                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground"
-                aria-label="Éditer le message"
-                onClick={() => setIsEditing(true)}
-              >
-                <Pencil className="w-3 h-3" />
-              </button>
+            {message.role === "assistant" ? (
+              <div className="prose prose-sm max-w-none prose-blue prose-pre:bg-gray-100 prose-pre:rounded-md prose-pre:p-2 prose-code:bg-gray-100 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-blockquote:border-l-4 prose-blockquote:border-blue-200 prose-blockquote:bg-blue-50 prose-blockquote:px-3 prose-blockquote:py-1 prose-li:marker:text-blue-400 prose-a:text-blue-600 hover:prose-a:underline prose-strong:font-semibold prose-em:italic prose-table:border prose-table:border-gray-200 prose-th:bg-gray-100 prose-th:font-semibold prose-th:p-2 prose-td:p-2 prose-img:rounded-md prose-img:shadow-sm prose-img:border">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: (props) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer">
+                        {props.children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <>
+                {message.content}
+                {"edited" in message && message.edited && (
+                  <span className="ml-1 text-xs text-muted-foreground">(Édité)</span>
+                )}
+                {onEdit && message.role === "user" && (
+                  <button
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground"
+                    aria-label="Éditer le message"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                )}
+              </>
             )}
           </>
         )}
