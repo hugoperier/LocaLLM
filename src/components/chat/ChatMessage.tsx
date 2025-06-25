@@ -1,14 +1,34 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatMessage as ChatMessageType } from "@/lib/types";
+import { useState, useRef, useEffect } from "react";
+import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components/ui/autosize-textarea";
+import { Pencil, Check, X } from "lucide-react";
 
 interface ChatMessageProps {
   message: ChatMessageType;
   showAvatar: boolean;
+  onEdit?: (content: string) => void;
 }
+export function ChatMessage({ message, showAvatar, onEdit }: ChatMessageProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(message.content);
+  const inputRef = useRef<AutosizeTextAreaRef | null>(null);
 
-export function ChatMessage({ message, showAvatar }: ChatMessageProps) {
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.textArea.focus();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    if (onEdit) {
+      onEdit(value);
+    }
+    setIsEditing(false);
+  };
+
   return (
-    <div className="flex gap-2 first:mt-2">
+    <div className="flex gap-2 first:mt-2 group">
       {message.role === "assistant" && (
         <>
           {!showAvatar ? (
@@ -22,13 +42,59 @@ export function ChatMessage({ message, showAvatar }: ChatMessageProps) {
         </>
       )}
       <div
-        className={`max-w-[60%] flex flex-col ${
-          (message.role === "assistant" || message.role === "system")
+        className={`relative max-w-[60%] flex flex-col ${
+          message.role === "assistant" || message.role === "system"
             ? "bg-white mr-auto"
             : "text-white bg-black ml-auto"
         } items-start gap-2 rounded-lg border p-2 text-left text-sm transition-all whitespace-pre-wrap`}
       >
-        {message.content}
+        {isEditing ? (
+          <>
+            <AutosizeTextarea
+              ref={inputRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              minHeight={25}
+              maxHeight={200}
+              className="w-full outline-none border-0 bg-transparent"
+            />
+            <div className="flex justify-end gap-1 w-full mt-1">
+              <button
+                className="p-1 text-primary hover:text-primary/80"
+                aria-label="Valider"
+                onClick={handleSave}
+              >
+                <Check className="w-4 h-4" />
+              </button>
+              <button
+                className="p-1 text-muted-foreground hover:text-muted-foreground/80"
+                aria-label="Annuler"
+                onClick={() => {
+                  setIsEditing(false);
+                  setValue(message.content);
+                }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {message.content}
+            {"edited" in message && message.edited && (
+              <span className="ml-1 text-xs text-muted-foreground">(Édité)</span>
+            )}
+            {onEdit && message.role === "user" && (
+              <button
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground"
+                aria-label="Éditer le message"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+          </>
+        )}
       </div>
       {message.role === "user" && (
         <>

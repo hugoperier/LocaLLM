@@ -18,6 +18,8 @@ interface ConversationStore {
   clearAll: () => void;
   selectById: (id: string) => void;
   addMessage: (conversationId: string, message: ChatMessage) => Promise<void>;
+  updateMessage: (conversationId: string, index: number, content: string) => void;
+  truncateMessages: (conversationId: string, index: number) => void;
   updateTitle: (conversationId: string, title: string) => void;
   loadFromStorage: () => Promise<void>;
 }
@@ -116,6 +118,63 @@ export const useConversations = create<ConversationStore>((set, get) => ({
       const summary = await summaryService.generateSummary(conversationId, message);
       get().updateTitle(conversationId, summary);
     }
+  },
+
+  updateMessage: (conversationId: string, index: number, content: string) => {
+    set((state) => {
+      const updatedConversations = state.conversations.map((conv) =>
+        conv.id === conversationId
+          ? {
+              ...conv,
+              messages: conv.messages.map((msg, i) =>
+                i === index ? { ...msg, content, edited: true } : msg
+              ),
+            }
+          : conv
+      );
+
+      const updatedSelectedConversation =
+        state.selectedConversation?.id === conversationId
+          ? {
+              ...state.selectedConversation,
+              messages: updatedConversations.find((c) => c.id === conversationId)!
+                .messages,
+            }
+          : state.selectedConversation;
+
+      const newState = {
+        conversations: updatedConversations,
+        selectedConversation: updatedSelectedConversation,
+      };
+      storageService.saveConversations(newState.conversations);
+      return newState;
+    });
+  },
+
+  truncateMessages: (conversationId: string, index: number) => {
+    set((state) => {
+      const updatedConversations = state.conversations.map((conv) =>
+        conv.id === conversationId
+          ? { ...conv, messages: conv.messages.slice(0, index + 1) }
+          : conv
+      );
+
+      const updatedSelectedConversation =
+        state.selectedConversation?.id === conversationId
+          ? {
+              ...state.selectedConversation,
+              messages: updatedConversations.find((c) => c.id === conversationId)!
+                .messages,
+            }
+          : state.selectedConversation;
+
+      const newState = {
+        conversations: updatedConversations,
+        selectedConversation: updatedSelectedConversation,
+      };
+      storageService.saveConversations(newState.conversations);
+      return newState;
+    });
   },
 
   updateTitle: (conversationId: string, title: string) => {

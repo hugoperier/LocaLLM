@@ -8,12 +8,14 @@ interface ChatMessagesProps {
   conversation: ChatMessageType[];
   isGenerating: boolean;
   currentResponse: string;
+  onEditMessage?: (index: number, content: string) => void;
 }
 
 export function ChatMessages({
   conversation,
   isGenerating,
   currentResponse,
+  onEditMessage,
 }: ChatMessagesProps) {
   const scrollRef = useRef<null | HTMLDivElement>(null);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -44,6 +46,11 @@ export function ChatMessages({
             showAvatar={
               i === 0 ||
               conversation[i - 1].role !== msg.role
+            }
+            onEdit={
+              onEditMessage && msg.role === "user"
+                ? (content) => onEditMessage(i, content)
+                : undefined
             }
           />
         ))}

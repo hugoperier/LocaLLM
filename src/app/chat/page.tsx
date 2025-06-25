@@ -26,6 +26,8 @@ function ChatContent() {
     clearAll,
     selectById,
     addMessage,
+    updateMessage,
+    truncateMessages,
     loadFromStorage,
     updateTitle,
   } = useConversations();
@@ -117,6 +119,66 @@ function ChatContent() {
     }
   };
 
+  const handleEditMessage = async (index: number, content: string) => {
+    if (!selectedConversation || isGenerating || isReloadingModel || !isInitialized) {
+      return;
+    }
+
+    updateMessage(selectedConversation.id, index, content);
+    truncateMessages(selectedConversation.id, index);
+
+    const updatedConv = useConversations.getState().selectedConversation;
+    if (!updatedConv) return;
+
+    setIsGenerating(true);
+    setCurrentResponse("");
+    setGeneratingConversationId(updatedConv.id);
+
+    try {
+      const webLLMMessages: ChatMessage[] = updatedConv.messages.map((msg) => ({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content.toString(),
+      }));
+
+      webLLMService.setOnTokenCallback((token) => {
+        setCurrentResponse((prev) => prev + token);
+      });
+
+      const response = await webLLMService.generateResponse(webLLMMessages);
+      await addMessage(updatedConv.id, {
+        content: response,
+        role: "assistant",
+      });
+    } catch (error: any) {
+      const errorMsg = String(error?.toString?.() || error?.message || error);
+      const isVectorIntError = errorMsg.includes("Expected null or instance of VectorInt");
+      if (isVectorIntError) {
+        showToast("Erreur WebLLM détectée, rechargement du modèle en cours...", { type: "error" });
+        setIsReloadingModel(true);
+        const currentModel = webLLMService.getCurrentModel();
+        if (currentModel) {
+          try {
+            await webLLMService.loadModel(currentModel);
+            showToast("Modèle rechargé avec succès !", { type: "success" });
+          } catch (reloadError) {
+            showToast("Échec du rechargement du modèle.", { type: "error" });
+          }
+        } else {
+          showToast("Aucun modèle courant à recharger.", { type: "error" });
+        }
+        setIsReloadingModel(false);
+      }
+      await addMessage(updatedConv.id, {
+        content: "Sorry, I encountered an error while generating a response.",
+        role: "assistant",
+      });
+    } finally {
+      setIsGenerating(false);
+      setCurrentResponse("");
+      setGeneratingConversationId(null);
+    }
+  };
+
   // Ajout logique pour empêcher la création d'un nouveau chat si le dernier est vide
   const handleAddConversation = () => {
     if (conversations.length > 0 && conversations[0].messages.length === 0) {
@@ -152,6 +214,7 @@ function ChatContent() {
                 conversation={selectedConversation.messages}
                 isGenerating={isGenerating && generatingConversationId === selectedConversation.id}
                 currentResponse={generatingConversationId === selectedConversation.id ? currentResponse : ""}
+                onEditMessage={handleEditMessage}
               />
               <ChatInput
                 userInput={userInput}
