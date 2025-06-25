@@ -12,6 +12,8 @@ import { Progress } from '@/components/ui/progress'
 interface ModelSelectorModalProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  welcomeMode?: boolean
+  forceOpen?: boolean
 }
 
 interface DownloadProgress {
@@ -20,7 +22,7 @@ interface DownloadProgress {
   text: string
 }
 
-export function ModelSelectorModal({ isOpen, onOpenChange }: ModelSelectorModalProps) {
+export function ModelSelectorModal({ isOpen, onOpenChange, welcomeMode = false, forceOpen = false }: ModelSelectorModalProps) {
   const [installed, setInstalled] = useState<string[]>([])
   const [installingId, setInstallingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,18 +74,30 @@ export function ModelSelectorModal({ isOpen, onOpenChange }: ModelSelectorModalP
     return ''
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (forceOpen && !installed.length) return;
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Gérer les modèles</DialogTitle>
-          <DialogDescription>Sélectionnez les modèles à installer localement</DialogDescription>
+          <DialogTitle>
+            {welcomeMode ? 'Bienvenue sur LocaLLM !' : 'Gérer les modèles'}
+          </DialogTitle>
+          <DialogDescription>
+            {welcomeMode
+              ? "Pour commencer, choisissez et installez un modèle d'IA local. Vous pourrez en changer plus tard."
+              : 'Sélectionnez les modèles à installer localement'}
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-2">
           <div className="space-y-4">
             {AVAILABLE_MODELS.map(model => {
               const isInstalled = webLLMService.isModelInstalled(model.id)
               const isLoading = installingId === model.id
+              const canRemove = installed.length > 1 || !welcomeMode
               return (
                 <div key={model.id} className="flex flex-col rounded-lg border p-3">
                   <div className="flex items-center justify-between">
@@ -97,6 +111,7 @@ export function ModelSelectorModal({ isOpen, onOpenChange }: ModelSelectorModalP
                         <div className="text-sm text-muted-foreground">
                           {model.params} · {model.size} · Score {model.score}
                         </div>
+                        <div className="text-xs text-muted-foreground mt-1">{model.description}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -106,13 +121,13 @@ export function ModelSelectorModal({ isOpen, onOpenChange }: ModelSelectorModalP
                       <Button
                         size="sm"
                         variant={isInstalled ? 'destructive' : 'secondary'}
-                        disabled={isLoading}
+                        disabled={isLoading || (isInstalled && !canRemove)}
                         onClick={() => (isInstalled ? handleRemove(model.id) : handleInstall(model.id))}
                       >
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : isInstalled ? (
-                          'Supprimer'
+                          canRemove ? 'Supprimer' : 'Installé'
                         ) : (
                           'Télécharger'
                         )}
@@ -143,6 +158,11 @@ export function ModelSelectorModal({ isOpen, onOpenChange }: ModelSelectorModalP
           </div>
         </ScrollArea>
         {error && <div className="pt-2 text-sm text-destructive">{error}</div>}
+        {welcomeMode && installed.length === 0 && (
+          <div className="pt-4 text-center text-sm text-muted-foreground">
+            Vous devez installer au moins un modèle pour commencer à utiliser LocaLLM.
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

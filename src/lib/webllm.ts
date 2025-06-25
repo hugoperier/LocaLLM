@@ -1,6 +1,34 @@
 import { CreateMLCEngine, MLCEngine, MLCEngineConfig, InitProgressReport } from "@mlc-ai/web-llm";
 import { ChatMessage, SystemMessage } from "./types";
 
+const defaultSystemPrompt = `
+# MISSION
+Vous êtes LocaLLM, un assistant IA généraliste exécuté localement. Vous devez toujours répondre dans la langue détectée du message de l'utilisateur, que ce soit le français, l'anglais ou toute autre langue courante.
+
+# LANGUE DE RÉPONSE
+- Analyse le message utilisateur et déduis automatiquement sa langue.
+- Réponds TOUJOURS dans **la langue du message utilisateur**, même si votre prompt système est en français.
+- Si la langue est réellement ambiguë (ex : chiffres ou symboles uniquement), choisis le **français par défaut**.
+
+# PRINCIPES CLÉS
+1. **Fiabilité :** Ne jamais inventer d'informations. Si vous ne savez pas, dites-le.
+2. **Transparence :** Vous ne pouvez pas accéder à Internet. Vos connaissances s'arrêtent à votre date d'entraînement.
+3. **Efficacité :** Soyez clair, précis, et structuré. Réponses courtes si possible, longues si nécessaire.
+
+# STYLE DE RÉPONSE
+- Utilisez le Markdown.
+- Mettez en gras les mots importants.
+- Utilisez des listes, tableaux, ou code blocks dès que pertinent.
+- Allez droit au but, sans formules de politesse.
+
+# EXEMPLES DE LANGUE
+- Si l'utilisateur écrit : "Can you help me with Docker config?" → vous répondez en anglais.
+- Si l'utilisateur écrit : "Tu peux m'aider avec Docker ?" → vous répondez en français.
+- Si l'utilisateur écrit : "¿Puedes ayudarme con Docker?" → vous répondez en espagnol.
+
+Votre réponse doit TOUJOURS être dans la langue de l'utilisateur. Ignorez complètement la langue du système si elle diffère de celle de l’utilisateur.
+`;
+
 interface ModelInfo {
     id: string
     name: string
@@ -15,7 +43,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         id: 'Mistral-7B-Instruct-v0.3-q4f16_1-MLC',
         name: 'Mistral 7B Instruct',
-        description: 'Modèle très performant pour le chat et le raisonnement. Excellent compromis qualité/taille.',
+        description: 'Excellent en chat et raisonnement, très bon ratio perfs/taille.',
         params: '7B',
         size: '4.8GB',
         score: 'A+',
@@ -24,7 +52,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         id: 'gemma-2-9b-it-q4f32_1-MLC',
         name: 'Gemma 2 9B',
-        description: 'Modèle multimodal (texte + image) de google. Offre les meilleures performances pour un usage plus lourd.',
+        description: 'Modèle texte/image puissant (et gourmand), adapté aux tâches complexes.',
         params: '9B',
         size: '5.0GB',
         score: 'A',
@@ -42,9 +70,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         id: 'Llama-3.2-3B-Instruct-q4f32_1-MLC',
         name: 'Llama 3.2 3B',
-        description: "Meta's Llama 3.2 3B model, instruction-tuned",
+        description: "Petit modèle rapide et précis",
         params: '3B',
-        size: '4.8GB',
+        size: '1.5GB',
         score: 'A+',
         avatar: '/avatar/01.png',
     },
@@ -138,7 +166,7 @@ class WebLLMService {
                 // No models installed, mark as initialized but without an engine
                 this.isInitialized = true;
                 if (this.onInitializedCallback) {
-                    this.onInitializedCallback(false);
+                    this.onInitializedCallback(true);
                 }
             }
         } catch (error) {
@@ -167,7 +195,7 @@ class WebLLMService {
             }
             await this.engine.reload(modelId);
         }
-        
+
         this.currentModel = modelId;
         this.isInitialized = true;
 
@@ -185,7 +213,7 @@ class WebLLMService {
         this.onTokenCallback = callback;
     }
 
-    async generateResponse(messages: ChatMessage[]): Promise<string> {
+    async generateResponse(messages: ChatMessage[], systemPrompt?: string): Promise<string> {
         if (!this.engine) {
             throw new Error("WebLLM not initialized");
         }
@@ -193,10 +221,12 @@ class WebLLMService {
         try {
             const systemMessage: SystemMessage = {
                 role: "system",
-                content: "You are LocaLLM, a helpful and efficient AI assistant running locally. Your goal is to provide accurate, relevant, and concise answers. Always respond directly in the user's language.",
+                content: systemPrompt ?? defaultSystemPrompt,
             };
 
             const allMessages = [systemMessage, ...messages];
+
+            console.log("allMessages", allMessages);
 
             const response = await this.engine.chat.completions.create({
                 messages: allMessages,
